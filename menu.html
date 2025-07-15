@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قائمة الطعام</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        :root { --primary-color: #e74c3c; --dark-color: #2c3e50; --light-gray: #ecf0f1; --white: #fff; }
+        body { font-family: 'Tajawal', 'Cairo', sans-serif; background-color: var(--light-gray); margin: 0; color: var(--dark-color); }
+        .menu-header {
+            height: 40vh;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            color: var(--white);
+        }
+        .menu-header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .menu-header h1 {
+            font-size: 3em;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+        }
+        main {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .search-container {
+            margin-bottom: 20px;
+        }
+        #itemSearchInput {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 15px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .menu-item-card {
+            background: var(--white);
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .menu-item-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        .menu-item-info {
+            padding: 15px;
+        }
+        .menu-item-info h4 { margin: 0 0 10px 0; font-size: 1.2em;}
+        .menu-item-info .price { font-size: 1.3em; font-weight: bold; color: var(--primary-color); }
+        .error-message { text-align: center; font-size: 1.5em; padding: 50px; }
+
+        @media (max-width: 768px) {
+            .menu-header h1 { font-size: 2em; }
+            .menu-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header id="menu-header" class="menu-header">
+        <h1 id="restaurant-name"></h1>
+    </header>
+    <main>
+        <div class="search-container">
+            <input type="search" id="itemSearchInput" placeholder="ابحث عن طبقك المفضل...">
+        </div>
+        <div id="menu-grid" class="menu-grid">
+            <!-- Menu items will be inserted here by JavaScript -->
+        </div>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const restaurantId = params.get('id');
+            const storedData = localStorage.getItem('restaurants_v8'); // Use the same key as index.html
+            
+            if (!restaurantId || !storedData) {
+                displayError("عفواً، المطعم غير موجود.");
+                return;
+            }
+
+            const allRestaurants = JSON.parse(storedData);
+            const restaurant = allRestaurants.find(r => r.id == restaurantId);
+
+            if (!restaurant) {
+                displayError("عفواً، المطعم غير موجود.");
+                return;
+            }
+
+            displayPage(restaurant);
+        });
+
+        function displayError(message) {
+            document.querySelector('main').innerHTML = `<div class="error-message">${message}</div>`;
+            document.title = "خطأ";
+        }
+
+        function displayPage(restaurant) {
+            document.title = `قائمة طعام ${restaurant.name}`;
+            const header = document.getElementById('menu-header');
+            header.style.backgroundImage = `url(${restaurant.image})`;
+            document.getElementById('restaurant-name').textContent = restaurant.name;
+
+            const searchInput = document.getElementById('itemSearchInput');
+            const menuGrid = document.getElementById('menu-grid');
+            
+            function renderMenuItems(items) {
+                menuGrid.innerHTML = '';
+                if(items.length === 0){
+                    menuGrid.innerHTML = `<div class="error-message">لا توجد نتائج بحث مطابقة.</div>`;
+                    return;
+                }
+                items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'menu-item-card';
+                    card.innerHTML = `
+                        <img src="${item.image}" alt="${item.name}">
+                        <div class="menu-item-info">
+                            <h4>${item.name}</h4>
+                            <p class="price">${item.price}</p>
+                        </div>
+                    `;
+                    menuGrid.appendChild(card);
+                });
+            }
+
+            // Initial render
+            renderMenuItems(restaurant.menu);
+
+            // Search functionality
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase().trim();
+                const filteredItems = restaurant.menu.filter(item => 
+                    item.name.toLowerCase().includes(searchTerm)
+                );
+                renderMenuItems(filteredItems);
+            });
+        }
+    </script>
+</body>
+</html>
