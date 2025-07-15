@@ -34,7 +34,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             const restaurantId = params.get('id');
-            const storedData = localStorage.getItem('restaurants_v9'); // <-- Updated key to match
+            const storedData = localStorage.getItem('restaurants_v9'); // <-- Use the same key as index.html
             
             if (!restaurantId || !storedData) { displayError("عفواً، المطعم غير موجود."); return; }
             const allRestaurants = JSON.parse(storedData);
